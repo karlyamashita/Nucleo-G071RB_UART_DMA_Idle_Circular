@@ -29,19 +29,26 @@
 #include "main.h"
 
 
-const char version[] = "v1.0.1";
-
+const char fwversion[] = "v1.0.1";
 
 
 extern UART_HandleTypeDef huart2;
 
 
 // UART2 for Command
+#define UART2_DMA_RX_QUEUE_SIZE 10 // queue size
+#define UART2_DMA_TX_QUEUE_SIZE 4
+
+UART_DMA_Data uart2_dmaDataRxQueue[UART2_DMA_RX_QUEUE_SIZE] = {0};
+UART_DMA_Data uart2_dmaDataTxQueue[UART2_DMA_TX_QUEUE_SIZE] = {0};
 UART_DMA_Struct_t uart2_msg =
 {
 	.huart = &huart2,
-	.rx.queueSize = UART_DMA_QUEUE_SIZE,
-	.tx.queueSize = UART_DMA_QUEUE_SIZE
+	.rx.queueSize = UART2_DMA_RX_QUEUE_SIZE,
+	.rx.msgQueue = uart2_dmaDataRxQueue,
+	.tx.queueSize = UART2_DMA_TX_QUEUE_SIZE,
+	.tx.msgQueue = uart2_dmaDataTxQueue,
+	.ringBuffer.dmaPtr.SkipOverFlow = true
 };
 
 
@@ -138,7 +145,7 @@ int ParseGet(char *msg, char *retStr)
 
 	if(strncmp(msg, "fwversion", strlen("fwversion"))== 0)
 	{
-		sprintf(retStr, "%s", version);
+		sprintf(retStr, "%s", fwversion);
 	}
 	else
 	{
@@ -179,7 +186,7 @@ void MCU_Prompt(void)
 {
 	char str[64] = "STM32 Ready";
 	strcat(str, " ");
-	strcat(str, version);
+	strcat(str, fwversion);
 
 	UART_DMA_NotifyUser(&uart2_msg, str, strlen(str), true);
 }
